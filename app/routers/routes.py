@@ -60,6 +60,8 @@ async def create_note(note: NoteCreate, db: Session = Depends(get_db),User_id: i
     db_user = db.query(User).filter(User.id == User_id).first()
     if not db_user:
         raise HTTPException(status_code=400, detail="User not found")
+    if not note.title or not note.content:
+        raise HTTPException(status_code=400, detail="Title and content are required")
     new_note = Notes(
         title=note.title,
         content=note.content,
