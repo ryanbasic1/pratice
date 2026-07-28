@@ -30,16 +30,6 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user     
      
 
-# @router.post("/login")
-# async def login(user: UserLogin, db: Session = Depends(get_db)):
-#     db_user = db.query(User).filter(User.email == user.email).first()
-#     if not db_user:
-#         raise HTTPException(status_code=400, detail="Invalid email or password")
-#     if not verify_password(user.password, db_user.password):
-#         raise HTTPException(status_code=400, detail="Invalid email or password")
-#     access_token = create_access_token(data={"user_id": db_user.id})
-#     return {"access_token": access_token, "token_type": "bearer"}
-
 @router.post("/login")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -76,6 +66,8 @@ async def create_note(note: NoteCreate, db: Session = Depends(get_db),User_id: i
     db.commit()
     db.refresh(new_note)
     return new_note
+
+
 @router.get("/view_note")
 async def view_note( db: Session = Depends(get_db), User_id: int = Depends(verify_access_token)):
     if not User_id:
@@ -84,4 +76,15 @@ async def view_note( db: Session = Depends(get_db), User_id: int = Depends(verif
     if not db_user:
         raise HTTPException(status_code=400, detail="User not found")
     return db.query(Notes).filter(Notes.user_id == User_id).all()
-   
+
+
+@router.delete("/delete_note")
+async def delete_note(id : int, db: Session = Depends(get_db), User_id: int = Depends(verify_access_token)):
+    if not User_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    note = db.query(Notes).filter(Notes.id == id, Notes.user_id == User_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    db.delete(note)
+    db.commit()
+    return {"message": "Note deleted successfully"}
