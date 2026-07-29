@@ -1,16 +1,26 @@
 import os
-from sqlalchemy import create_engine,engine 
-from sqlalchemy.orm import sessionmaker,declarative_base,Session
-
 from dotenv import load_dotenv
-
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-database_url = os.getenv("DATABASE_URL")
-engine = create_engine(database_url)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,   # Checks if a connection is alive before using it
+    pool_recycle=300,     # Recycles connections every 5 minutes
+)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
+
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()

@@ -2,7 +2,8 @@ from fastapi import APIRouter,Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from app.database import get_db
 from sqlalchemy.orm import Session
-
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.auth.auth import verify_access_token,create_access_token,hash_password,verify_password
@@ -55,8 +56,6 @@ async def login(
 
 @router.post("/create_thought")
 async def create_note(note: NoteCreate, db: Session = Depends(get_db),User_id: int = Depends(verify_access_token)):
-    if not User_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
     db_user = db.query(User).filter(User.id == User_id).first()
     if not db_user:
         raise HTTPException(status_code=400, detail="User not found")
@@ -72,49 +71,103 @@ async def create_note(note: NoteCreate, db: Session = Depends(get_db),User_id: i
     db.refresh(new_note)
     return new_note
 
+# @router.get("/view_thoughts")
+# async def view_note(
+#     all: bool = False,
+#     db: Session = Depends(get_db),
+#     User_id: int = Depends(verify_access_token)
+# ):
+#     if not User_id:
+#         raise HTTPException(status_code=401, detail="Invalid token")
+
+#     db_user = db.query(User).filter(User.id == User_id).first()
+#     if not db_user:
+#         raise HTTPException(status_code=400, detail="User not found")
+
+#     query = db.query(Notes)
+#     if not all:
+#         query = query.filter(Notes.user_id == User_id)
+
+#     notes = query.all()
+
+#     result = []
+#     for note in notes:
+#         likes = db.query(Like).filter(Like.note_id == note.id).count()
+#         liked_by_me = db.query(Like).filter(
+#             Like.note_id == note.id, Like.user_id == User_id
+#         ).first() is not None
+#         author = db.query(User).filter(User.id == note.user_id).first()
+
+#         result.append({
+#             "id": note.id,
+#             "title": note.title,
+#             "content": note.content,
+#             "likes": likes,
+#             "liked_by_me": liked_by_me,
+#             "author": author.display_name if author else "Unknown",
+#             "user_id": note.user_id
+#         })
+
+#     return result
+
+
+
 @router.get("/view_thoughts")
 async def view_note(
     all: bool = False,
     db: Session = Depends(get_db),
-    User_id: int = Depends(verify_access_token)
+    user_id: int = Depends(verify_access_token),
 ):
-    if not User_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    Author = aliased(User)
 
-    db_user = db.query(User).filter(User.id == User_id).first()
-    if not db_user:
-        raise HTTPException(status_code=400, detail="User not found")
+    query = (
+        db.query(
+            Notes.id,
+            Notes.title,
+            Notes.content,
+            Notes.user_id,
+            Author.display_name.label("author"),
+            func.count(Like.id).label("likes"),
+        )
+        .join(Author, Notes.user_id == Author.id)
+        .outerjoin(Like, Like.note_id == Notes.id)
+        .group_by(
+            Notes.id,
+            Notes.title,
+            Notes.content,
+            Notes.user_id,
+            Author.display_name,
+        )
+    )
 
-    query = db.query(Notes)
     if not all:
-        query = query.filter(Notes.user_id == User_id)
+        query = query.filter(Notes.user_id == user_id)
 
     notes = query.all()
 
-    result = []
-    for note in notes:
-        likes = db.query(Like).filter(Like.note_id == note.id).count()
-        liked_by_me = db.query(Like).filter(
-            Like.note_id == note.id, Like.user_id == User_id
-        ).first() is not None
-        author = db.query(User).filter(User.id == note.user_id).first()
+    # Get all notes liked by the current user in one query
+    liked_notes = {
+        row.note_id
+        for row in db.query(Like.note_id)
+        .filter(Like.user_id == user_id)
+        .all()
+    }
 
-        result.append({
+    return [
+        {
             "id": note.id,
             "title": note.title,
             "content": note.content,
-            "likes": likes,
-            "liked_by_me": liked_by_me,
-            "author": author.display_name if author else "Unknown",
-            "user_id": note.user_id
-        })
-
-    return result
+            "likes": note.likes,
+            "liked_by_me": note.id in liked_notes,
+            "author": note.author,
+            "user_id": note.user_id,
+        }
+        for note in notes
+    ]
 
 @router.delete("/delete_thought")
 async def delete_note(id : int, db: Session = Depends(get_db), User_id: int = Depends(verify_access_token)):
-    if not User_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
     note = db.query(Notes).filter(Notes.id == id, Notes.user_id == User_id).first()
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -124,8 +177,6 @@ async def delete_note(id : int, db: Session = Depends(get_db), User_id: int = De
 
 @router.put("/update_thought")
 async def update_note(id: int, note: NoteCreate, db: Session = Depends(get_db), User_id: int = Depends(verify_access_token)):
-    if not User_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
     db_note = db.query(Notes).filter(Notes.id == id, Notes.user_id == User_id).first()
     if not db_note:
         raise HTTPException(status_code=404, detail="Note not found")
