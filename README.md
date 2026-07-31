@@ -221,3 +221,14 @@ This project is licensed under the MIT License.
 *"Every thought deserves a home."*
 
 </div>
+
+# SOME GLIMPSE 💭❤️
+
+This project is licensed under the MIT License.
+
+<img width="347" height="562" alt="Screenshot 2026-08-01 004059" src="https://github.com/user-attachments/assets/541e15c3-2176-488b-9bc3-9f834545b669" />
+
+<img width="1917" height="907" alt="Screenshot 2026-08-01 004151" src="https://github.com/user-attachments/assets/c7097719-e9e6-49c9-949b-a54087483f15" />
+<img width="361" height="707" alt="Screenshot 2026-08-01 004109" src="https://github.com/user-attachments/assets/29d0a619-a607-4d53-a85e-8706fb42d4a2" />
+
+
