@@ -224,8 +224,10 @@ This project is licensed under the MIT License.
 
 # SOME GLIMPSE 💭❤️
 
-This project is licensed under the MIT License.
 
+# SOME IMAGES ❤️❤️
+PLZ IF BACKEND TAKES TIMES TO START WAIT A SEC!! THANK U
+LINK TO VISIT ===== src = "https://frontend-one-theta-tznvtxa4h7.vercel.app/" =====
 <img width="347" height="562" alt="Screenshot 2026-08-01 004059" src="https://github.com/user-attachments/assets/541e15c3-2176-488b-9bc3-9f834545b669" />
 
 <img width="1917" height="907" alt="Screenshot 2026-08-01 004151" src="https://github.com/user-attachments/assets/c7097719-e9e6-49c9-949b-a54087483f15" />
