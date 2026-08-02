@@ -11,6 +11,11 @@ from app.models.model import User,Notes,Like
 from app.schemas.schemes import UserCreate,UserLogin,NoteCreate
 router = APIRouter()
 
+@router.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
 @router.get("/userdetails")
 async def get_user_details(db: Session = Depends(get_db),user_id: int = Depends(verify_access_token)):
     return db.query(User).filter(User.id == user_id).first()
